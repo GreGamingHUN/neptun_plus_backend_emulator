@@ -1,0 +1,14 @@
+{
+  "name": "neptun_plus_backend_emulator",
+  "version": "0.0.1",
+  "description": "Neptun Backed Emulator",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "GreG",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.8"
+  }
+}
