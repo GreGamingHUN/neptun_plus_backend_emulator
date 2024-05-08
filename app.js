@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const port = 3000;
 const admin = require("firebase-admin");
+const crypto = require("crypto");
 
 var serviceAccount = require("./admin-key.json");
 
@@ -13,12 +14,12 @@ const db = admin.firestore();
 
 app.use(express.json());
 
-app.post("/GetAddedSubjects", async (req, res) => {
+app.post("/api/GetAddedSubjects", async (req, res) => {
   if (req.body.TermId == undefined) {
     return res.status(400).send("TermId is required");
   }
   db.collection("addedsubjects")
-    .where("TermId", "==", parseInt(req.body.TermId))
+    .where("TermId", "==", parseInt(req.body.TermId)).where("neptunCode", "==", req.body.UserLogin.toUpperCase())
     .get()
     .then((snapshot) => {
       let content = [];
@@ -29,7 +30,7 @@ app.post("/GetAddedSubjects", async (req, res) => {
     });
 });
 
-app.post("/SetReadedMessage", async (req, res) => {
+app.post("/api/SetReadedMessage", async (req, res) => {
   if (req.body.PersonMessageId == undefined) {
     return res.status(400).send("MessageId is required");
   }
@@ -69,7 +70,7 @@ function getDateFromString(dateString) {
   return new Date(timestamp);
 }
 
-app.post("/GetCalendarData", async (req, res) => {
+app.post("/api/GetCalendarData", async (req, res) => {
   if (req.body.startDate == undefined || req.body.endDate == undefined) {
     return res.status(400).send("startDate and endDate are required");
   }
@@ -82,10 +83,8 @@ app.post("/GetCalendarData", async (req, res) => {
         let endDate = getDateFromString(req.body.endDate);
         endDate.setDate(endDate.getDate() + 1);
         if (
-          getDateFromString(doc.get("start")) >
-            startDate &&
-          getDateFromString(doc.get("start")) <
-            endDate
+          getDateFromString(doc.get("start")) > startDate &&
+          getDateFromString(doc.get("start")) < endDate
         ) {
           content.push(doc.data());
         }
@@ -94,7 +93,47 @@ app.post("/GetCalendarData", async (req, res) => {
     });
 });
 
-app.post("/Get*", async (req, res) => {
+app.post("/api/SetNewPassword", async (req, res) => {
+  let newPassword = req.body.NewPassword;
+  let hash = crypto.createHash("sha256").update(newPassword).digest("hex");
+
+  db.collection("students")
+    .where("neptunCode", "==", req.body.UserLogin.toUpperCase())
+    .get()
+    .then((snapshot) => {
+      snapshot.forEach((doc) => {
+        db.collection("students")
+          .doc(doc.id)
+          .update({
+            password: hash,
+          })
+          .then(() => {
+            res.send({});
+          })
+          .catch((error) => {
+            console.log("Error updating student:", error);
+          });
+      });
+    });
+});
+
+app.post("/api/GetSubjects", async (req, res) => {
+  if (req.body.TermId == undefined) {
+    return res.status(400).send("TermId is required");
+  }
+  db.collection("subjects")
+    .where("TermID", "==", parseInt(req.body.TermId))
+    .get()
+    .then((snapshot) => {
+      let content = [];
+      snapshot.forEach((doc) => {
+        content.push(doc.data());
+      });
+      res.send({ SubjectList: content });
+    });
+});
+
+app.post("/api/Get*", async (req, res) => {
   let response = {};
   let collectionName = req.path.slice(4).toLowerCase();
   db.collection(collectionName)
@@ -126,23 +165,21 @@ app.post("/Get*", async (req, res) => {
     });
 });
 
-app.post("/register", async (req, res) => {
+app.post("/api/register", async (req, res) => {
   let body = req.body;
   if (!body.neptunCode) {
     return res.status(400).send("neptunCode is required");
   }
-  admin
-    .auth()
-    .createUser({
-      email: body.email,
-      emailVerified: true,
-      password: body.password,
-      displayName: body.neptunCode,
-    })
-    .then((creds) => {
-      console.log("lets goo" + creds);
-      res.send("letsgo" + JSON.stringify(creds));
-    });
+  if (!body.password) {
+    return res.status(400).send("password is required");
+  }
+});
+
+app.use(express.static(__dirname + '/html'));
+
+
+app.get("/", (req, res) => {
+  return res.sendFile(__dirname + "/html/index.html");
 });
 
 app.listen(3000, () => {
