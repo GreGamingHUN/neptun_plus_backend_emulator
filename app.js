@@ -3,6 +3,7 @@ const app = express();
 const port = 3000;
 const admin = require("firebase-admin");
 const crypto = require("crypto");
+const bodyParser = require('body-parser');
 
 var serviceAccount = require("./admin-key.json");
 
@@ -15,6 +16,10 @@ const db = admin.firestore();
 app.use(express.json());
 
 app.post("/api/GetAddedSubjects", async (req, res) => {
+  if (!loginCheck()) {
+    return res.send({ "ErrorMessage": "Hibás neptunkód vagy jelszó"});
+  }
+
   if (req.body.TermId == undefined) {
     return res.status(400).send("TermId is required");
   }
@@ -177,11 +182,60 @@ app.post("/api/register", async (req, res) => {
 
 app.use(express.static(__dirname + '/html'));
 
+app.use(bodyParser.urlencoded({ extended: true }));
+
+app.engine('html', require('ejs').renderFile);
 
 app.get("/", (req, res) => {
-  return res.sendFile(__dirname + "/html/index.html");
+  return res.render(__dirname + "/html/index.ejs");
 });
+
+app.post("/login", (req, res) => {
+
+  if (req.body.username == 'admin' && req.body.password == 'admin') {
+    return res.redirect('/admin');
+  }
+  console.log("hibás jelszó");
+  return res.redirect('/');
+});
+
+app.get("/admin", (req, res) => {
+  db.collection("students").get().then((snapshot) => {
+    let content = [];
+    snapshot.forEach((doc) => {
+      content.push(doc.data().neptunCode);
+    });
+    console.log(content);
+    return res.render(__dirname + "/html/admin.ejs", { students: content });
+  });
+});
+
+app.post("/admin/addStudent", (req, res) => {
+  let hash = crypto.createHash("sha256").update(req.body.password).digest("hex");
+  db.collection("students").add({
+    neptunCode: req.body.neptunCode.toUpperCase(),
+    password: hash
+  }).then(() => {
+    console.log("letsgo");
+    return res.redirect('/admin');
+  });
+})
 
 app.listen(3000, () => {
   console.log(`Server is running on port ${port}`);
 });
+
+
+function getHash(input) {
+  return crypto.createHash("sha256").update(input).digest("hex");
+}
+
+function loginCheck(neptunCode, password) {
+  let hash = getHash(password);
+  db.collection("students").where("neptunCode", "==", neptunCode).where("password", "==", hash).get().then((snapshot) => {
+    if (snapshot.empty) {
+      return false;
+    }
+    return true;
+  });
+}
