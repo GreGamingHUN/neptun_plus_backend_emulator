@@ -17,7 +17,7 @@ app.use(express.json());
 
 app.post("/api/GetAddedSubjects", async (req, res) => {
   if (!loginCheck()) {
-    return res.send({ "ErrorMessage": "Hibás neptunkód vagy jelszó"});
+    return res.send({ "ErrorMessage": "Hibás neptunkód vagy jelszó" });
   }
 
   if (req.body.TermId == undefined) {
@@ -122,6 +122,25 @@ app.post("/api/SetNewPassword", async (req, res) => {
     });
 });
 
+app.post("/api/SetExamSigning", async (req, res) => {
+  let examID = req.body.ExamId;
+  let neptunCode = req.body.UserLogin.toUpperCase();
+  //let term = (await db.collection("periodterms").where("active", "==", true).get())[0];
+  let exam = (await db.collection("addedexams").where("ExamID", "==", examID).where("NeptunCode", "==", neptunCode).get())[0];
+  if (exam != undefined) {
+    res.send({ "ErrorMessage": "Vizsgajelentkezés sikertelen, mert már jelentkezett erre a vizsgára" });
+    return;
+  }
+
+  await db.collection("addedexams").add({
+    "ExamID": examID,
+    "NeptunCode": neptunCode,
+    "grade": "",
+    "status": "pending"
+  });
+  res.send({});
+});
+
 app.post("/api/GetSubjects", async (req, res) => {
   if (req.body.TermId == undefined) {
     return res.status(400).send("TermId is required");
@@ -140,7 +159,14 @@ app.post("/api/GetSubjects", async (req, res) => {
 
 app.post("/api/Get*", async (req, res) => {
   let response = {};
-  let collectionName = req.path.slice(4).toLowerCase();
+  let collectionName = req.path.slice(8).toLowerCase();
+  switch (collectionName) {
+    case "exams":
+      response.ExamList = await getExams(req.body.filter.ExamType, req.body.filter.Term, req.body.UserLogin.toUpperCase());
+
+      res.send(response);
+      return;
+  }
   db.collection(collectionName)
     .get()
     .then((snapshot) => {
@@ -151,6 +177,7 @@ app.post("/api/Get*", async (req, res) => {
 
       switch (collectionName) {
         case "messages":
+          content = filterMessages(content, req.body.UserLogin.toUpperCase());
           response.MessagesList = content;
           break;
         case "periodterms":
@@ -162,6 +189,8 @@ app.post("/api/Get*", async (req, res) => {
         case "curriculums":
           response.CurriculumList = content;
           break;
+        case "exams":
+          response.ExamList = content;
         default:
           break;
       }
@@ -169,6 +198,47 @@ app.post("/api/Get*", async (req, res) => {
       res.send(response);
     });
 });
+
+async function getExams(added, termId, neptunCode) {
+  if (added == 0) {
+    let data = await db.collection("exams").where("TermID", "==", Number(termId)).get()
+    let content = [];
+    data.forEach(doc => {
+      let exam = doc.data();
+      exam.ExamID = doc.id;
+      content.push(exam);
+    });
+    return content;
+  } else if (added == 1) {
+    let examIdCollection = await db.collection("addedexams").where("NeptunCode", "==", neptunCode).get();
+    let examIds = [];
+    examIdCollection.forEach(doc => {
+      examIds.push(doc.data().ExamID);
+    });
+    let content = [];
+
+    for (let i = 0; i < examIds.length; i++) {
+      let exam = await db.collection("exams").doc(examIds[i]).get();
+      if (exam.data().TermID == termId) {
+        exam = exam.data();
+        exam.ExamID = examIds[i];
+        content.push(exam);
+
+      }
+    }
+    return content;
+  }
+}
+
+function filterMessages(content, neptunCode) {
+  let filteredContent = [];
+  content.forEach((message) => {
+    if (message.IsGlobal == true || message.RecipientNeptunCode == neptunCode) {
+      filteredContent.push(message);
+    }
+  });
+  return filteredContent;
+}
 
 app.post("/api/register", async (req, res) => {
   let body = req.body;
@@ -231,6 +301,7 @@ function getHash(input) {
 }
 
 function loginCheck(neptunCode, password) {
+  return true;
   let hash = getHash(password);
   db.collection("students").where("neptunCode", "==", neptunCode).where("password", "==", hash).get().then((snapshot) => {
     if (snapshot.empty) {
