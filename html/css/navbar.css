@@ -1,0 +1,28 @@
+.navbar-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 50px;
+    background-color: rgb(228, 140, 140);
+    display: flex;
+    justify-content: center;
+}
+
+a {
+    height: 50px;
+}
+
+.navbar-button {
+    background: none;
+    color: whitesmoke;
+    font-weight: bold;
+    border: none;
+    transition: all 0.2s;
+    height: 100%;
+}
+
+.navbar-button:hover {
+    transition: all 0.2s;
+    background-color: rgb(253, 154, 154);
+}

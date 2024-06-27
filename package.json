@@ -4,9 +4,7 @@
   "description": "Neptun Backed Emulator",
   "main": "app.js",
   "scripts": {
-    "start": "webpack-dev-server --open",
-    "build": "webpack",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node app.js"
   },
   "author": "GreG",
   "license": "ISC",

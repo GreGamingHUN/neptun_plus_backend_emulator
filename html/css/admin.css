@@ -1,0 +1,15 @@
+* {
+    font-family: 'Roboto', sans-serif;
+}
+
+body {
+    padding-top: 65px;
+    background: rgb(53, 53, 53);
+    color: whitesmoke;
+    display: flex;
+    justify-content: center;
+}
+
+.neptun-table {
+    align-items: center;
+}

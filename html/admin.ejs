@@ -4,26 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Irányítópult</title>
+    <link rel="stylesheet" href="./css/admin.css">
 </head>
 <body>
-    <h1>Admin Felület</h1>
-    <h2>Hallgatók listája</h2>
-    <table>
-        <tr>
-            <th>Neptunkód</th>
-        </tr>
-        <% students.forEach(element => { %>
-         <tr>
-            <td>
-                <%= element %>
-            </td>
-        </tr>
-        <% }) %>
-    </table>
-    <form action="/admin/addStudent" method="post">
-        <input type="text" name="neptunCode" placeholder="Neptunkód">
-        <input type="text" name="password" placeholder="Jelszó">
-        <button type="submit">Hozzáadás</button>
-    </form>
+    <%- include('templates/navbar.ejs') %> 
+    <div class="hallgatok-container">
+        <h2 style="text-align: center;">Hallgatók listája</h2>
+        <table class="neptun-table">
+            <tr>
+                <th>Neptunkód</th>
+            </tr>
+            <% students.forEach(element => { %>
+             <tr>
+                <td>
+                    <%= element %>
+                </td>
+            </tr>
+            <% }) %>
+        </table>
+        <form action="/admin/addStudent" method="post">
+            <input type="text" name="neptunCode" placeholder="Neptunkód">
+            <input type="text" name="password" placeholder="Jelszó">
+            <button type="submit">Hozzáadás</button>
+        </form>
+    </div>
 </body>
 </html>

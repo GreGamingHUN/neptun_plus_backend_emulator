@@ -16,10 +16,6 @@ const db = admin.firestore();
 app.use(express.json());
 
 app.post("/api/GetAddedSubjects", async (req, res) => {
-  if (!loginCheck()) {
-    return res.send({ "ErrorMessage": "Hibás neptunkód vagy jelszó" });
-  }
-
   if (req.body.TermId == undefined) {
     return res.status(400).send("TermId is required");
   }
@@ -131,9 +127,14 @@ app.post("/api/SetExamSigning", async (req, res) => {
     let examQuery = await db.collection("addedexams").where("ExamID", "==", examID).where("NeptunCode", "==", neptunCode).get();
     let exam = examQuery.docs[0];
     if (exam != undefined) {
-      await db.collection("addedexams").doc(exam.id).delete();
-      res.send({});
-      return;
+      if (exam.status == "pending") {
+        await db.collection("addedexams").doc(exam.id).delete();
+        res.send({});
+        return;
+      } else {
+        res.send({ "ErrorMessage": "Leadás sikertelen, mert a vizsga már értékelve lett" });
+        return;
+      }
     }
     res.send({ "ErrorMessage": "Vizsgajelentkezés visszavonása sikertelen, mert nem jelentkezett erre a vizsgára" });
   }
@@ -305,6 +306,10 @@ app.post("/admin/addStudent", (req, res) => {
   });
 })
 
+app.get("/message", (req, res) => {
+  return res.render(__dirname + "/html/message.ejs");
+});
+
 app.listen(3000, () => {
   console.log(`Server is running on port ${port}`);
 });
@@ -312,15 +317,4 @@ app.listen(3000, () => {
 
 function getHash(input) {
   return crypto.createHash("sha256").update(input).digest("hex");
-}
-
-function loginCheck(neptunCode, password) {
-  return true;
-  let hash = getHash(password);
-  db.collection("students").where("neptunCode", "==", neptunCode).where("password", "==", hash).get().then((snapshot) => {
-    if (snapshot.empty) {
-      return false;
-    }
-    return true;
-  });
 }
