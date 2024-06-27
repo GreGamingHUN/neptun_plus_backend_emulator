@@ -126,6 +126,18 @@ app.post("/api/SetExamSigning", async (req, res) => {
   let examID = req.body.ExamId;
   let neptunCode = req.body.UserLogin.toUpperCase();
   //let term = (await db.collection("periodterms").where("active", "==", true).get())[0];
+
+  if (req.body.SigningOn == false) {
+    let examQuery = await db.collection("addedexams").where("ExamID", "==", examID).where("NeptunCode", "==", neptunCode).get();
+    let exam = examQuery.docs[0];
+    if (exam != undefined) {
+      await db.collection("addedexams").doc(exam.id).delete();
+      res.send({});
+      return;
+    }
+    res.send({ "ErrorMessage": "Vizsgajelentkezés visszavonása sikertelen, mert nem jelentkezett erre a vizsgára" });
+  }
+
   let exam = (await db.collection("addedexams").where("ExamID", "==", examID).where("NeptunCode", "==", neptunCode).get())[0];
   if (exam != undefined) {
     res.send({ "ErrorMessage": "Vizsgajelentkezés sikertelen, mert már jelentkezett erre a vizsgára" });
@@ -139,6 +151,7 @@ app.post("/api/SetExamSigning", async (req, res) => {
     "status": "pending"
   });
   res.send({});
+  return;
 });
 
 app.post("/api/GetSubjects", async (req, res) => {
@@ -210,9 +223,9 @@ async function getExams(added, termId, neptunCode) {
     });
     return content;
   } else if (added == 1) {
-    let examIdCollection = await db.collection("addedexams").where("NeptunCode", "==", neptunCode).get();
+    let examCollection = await db.collection("addedexams").where("NeptunCode", "==", neptunCode).get();
     let examIds = [];
-    examIdCollection.forEach(doc => {
+    examCollection.forEach(doc => {
       examIds.push(doc.data().ExamID);
     });
     let content = [];
@@ -222,6 +235,7 @@ async function getExams(added, termId, neptunCode) {
       if (exam.data().TermID == termId) {
         exam = exam.data();
         exam.ExamID = examIds[i];
+        exam.status = examCollection.docs[i].data().status;
         content.push(exam);
 
       }
