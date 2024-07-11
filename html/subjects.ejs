@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tárgyak</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/subjects.css">
+    <script src="/js/subjects.js"></script>
+</head>
+<body>
+    <%- include('templates/navbar.ejs') %>
+    <div class="subjects-container">
+        <h1>Tárgyak</h1>
+        <select name="periodterm" id="periodterm" onchange="setPeriodTerm(value)">
+            <option value=""></option>
+            <% periodTerms.forEach(element => { %>
+                <% if (element.Id == periodTermId) { %>
+                    <option value="<%= element.Id %>" selected><%= element.TermName %></option>
+                <% } else { %>
+                    <option value="<%= element.Id %>"><%= element.TermName %></option>
+                <% } %>
+            <% }) %>
+        </select>
+        <% if (subjects != undefined) { %>
+            <table>
+                <tr>
+                    <th>Tárgynév</th>
+                    <th>Tárgykód</th>
+                    <th>Feltétel</th>
+                    <th>Típus</th>
+                    <th>Kurzusok</th>
+                </tr>
+                <% subjects.forEach(element => { %>
+                    <tr>
+                        <td><%= element.SubjectName %></td>
+                        <td><%= element.SubjectCode %></td>
+                        <td><%= element.SubjectRequirement %></td>
+                        <td><%= element.SubjectSignupType %></td>
+                        <td>
+                            <button class="course-button">Kurzusok megtekintése</button>
+                        </td>
+                    </tr>
+                <% }) %>
+            </table>
+        <% } else { %>
+            <h3>Válassz időszakot!</h3>
+        <% } %>
+    </div>
+</body>
+</html>

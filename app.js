@@ -37,33 +37,15 @@ app.post("/api/SetReadedMessage", async (req, res) => {
   }
 
   let messageId = req.body.PersonMessageId;
-  db.collection("messages")
-    .where("Id", "==", messageId)
-    .get()
-    .then((snapshot) => {
-      if (!snapshot.empty) {
-        snapshot.forEach((doc) => {
-          db.collection("messages")
-            .doc(doc.id)
-            .update({
-              IsNew: false,
-            })
-            .then(() => {
-              res.send({});
-            })
-            .catch((error) => {
-              console.log("Error updating message:", error);
-              res.status(500).send("Error updating message: " + error);
-            });
-        });
-      } else {
-        res.status(404).send("No message found with the provided ID");
-      }
-    })
-    .catch((error) => {
-      console.log("Error getting message:", error);
-      res.status(500).send("Error getting message: " + error);
-    });
+  let neptunCode = req.body.UserLogin.toUpperCase();
+
+  db.collection("readmessages").add({
+    "MessageID": messageId,
+    "NeptunCode": neptunCode,
+    "IsnNew": false
+  }).then(() => {
+    res.send({});
+  });
 });
 
 function getDateFromString(dateString) {
@@ -183,7 +165,7 @@ app.post("/api/Get*", async (req, res) => {
   }
   db.collection(collectionName)
     .get()
-    .then((snapshot) => {
+    .then(async (snapshot) => {
       let content = [];
       snapshot.forEach((doc) => {
         content.push(doc.data());
@@ -191,7 +173,7 @@ app.post("/api/Get*", async (req, res) => {
 
       switch (collectionName) {
         case "messages":
-          content = filterMessages(content, req.body.UserLogin.toUpperCase());
+          content = await filterMessages(content, req.body.UserLogin.toUpperCase());
           response.MessagesList = content;
           break;
         case "periodterms":
@@ -245,10 +227,17 @@ async function getExams(added, termId, neptunCode) {
   }
 }
 
-function filterMessages(content, neptunCode) {
+async function filterMessages(content, neptunCode) {
   let filteredContent = [];
+  let readMessages = await db.collection("readmessages").where("NeptunCode", "==", neptunCode).get();
   content.forEach((message) => {
     if (message.IsGlobal == true || message.RecipientNeptunCode == neptunCode) {
+      message.IsNew = true;
+      readMessages.forEach((readMessage) => {
+        if (readMessage.data().MessageID == message.Id) {
+          message.IsNew = false;
+        }
+      });
       filteredContent.push(message);
     }
   });
@@ -306,6 +295,27 @@ app.post("/admin/addStudent", (req, res) => {
   });
 })
 
+app.get("/admin/subjects", async (req, res) => {
+  let periodTerms = await db.collection("periodterms").get();
+  periodTerms = periodTerms.docs.map(doc => doc.data());
+  let subjects;
+  if (req.query.periodtermid != undefined) {
+    subjects = await db.collection("subjects").where("TermID", "==", Number(req.query.periodtermid)).get();
+    subjects = subjects.docs.map(doc => doc.data());
+  }
+  if (req.query.periodtermid == '') {
+    subjects = undefined;
+  }
+  return res.render(__dirname + "/html/subjects.ejs", {periodTerms: periodTerms, subjects: subjects, periodTermId: req.query.periodtermid});
+});
+
+
+app.get("/admin/message", async (req, res) => {
+  let students = await db.collection("students").get();
+  let neptunCodes = students.docs.map(doc => doc.data().neptunCode);
+  return res.render(__dirname + "/html/message.ejs", { neptunCodes: neptunCodes });
+});
+
 app.post("/admin/sendMessage", async (req, res) => {
   let sendDateMilliseconds = new Date().getTime();
   let randomNumber;
@@ -323,10 +333,9 @@ app.post("/admin/sendMessage", async (req, res) => {
   db.collection("messages").add({
     Subject: req.body.subject,
     Detail: req.body.details,
-    IsGlobal: req.body.isGlobal ?? true,
-    RecipientNeptunCode: req.body.recipientNeptunCode ?? "",
+    IsGlobal: req.body.isglobal == "on" ? true : false,
+    RecipientNeptunCode: req.body.neptuncode ?? "",
     Name: "Rendszerüzenet",
-    IsNew: true,
     SendDate: `/Date(${sendDateMilliseconds})/`,
     Id: randomNumber
   }).then(() => {
@@ -338,11 +347,6 @@ function getRandomNumber(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-app.get("/admin/message", async (req, res) => {
-  let students = await db.collection("students").get();
-  let neptunCodes = students.docs.map(doc => doc.data().neptunCode);
-  return res.render(__dirname + "/html/message.ejs", {neptunCodes: neptunCodes});
-});
 
 app.listen(3000, () => {
   console.log(`Server is running on port ${port}`);

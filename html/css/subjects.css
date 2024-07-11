@@ -1,0 +1,19 @@
+.subjects-container {
+    display: flex;
+    flex-direction: column;
+    gap: 35px;
+    text-align: center;
+    align-items: center;
+}
+
+.course-button {
+    padding: 10px;
+}
+
+select {
+    width: min-content;
+}
+
+table * {
+    padding: 10px;
+}
