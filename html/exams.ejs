@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vizsgák <%= subjectCode %></title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="/js/exams.js"></script>
+</head>
+<body>
+    <%- include('templates/navbar.ejs') %>
+    <div class="container">
+        <div>
+            <h1>Vizsgák</h1>
+            <h3><%= subjectCode %></h3>
+            <table>
+                <tr>
+                    <th>Kezdés</th>
+                    <th>Vége</th>
+                    <th>Típus</th>
+                </tr>
+                <% exams.forEach(element => { %>
+                    <tr>
+                        <% let fromDate = new Date(Number(element.FromDate.match(/\d+/))).toISOString().split('T') %>
+                        <% let toDate = new Date(Number(element.ToDate.match(/\d+/))).toISOString().split('T') %>
+                        <td><%= fromDate[0] %> <%= fromDate[1].split('.')[0] %></td>
+                        <td><%= toDate[0] %> <%= toDate[1].split('.')[0] %></td>
+                        <td><%= element.ExamType %></td>
+                    </tr>
+                <% }) %>
+            </table>
+        </div>
+        <button class="new" onclick="newExam('<%= subjectCode %>')">+</button>
+    </div>
+</body>
+</html>

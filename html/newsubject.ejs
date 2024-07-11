@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Új tárgy</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/newsubject.css">
+</head>
+<body>
+    <%- include('templates/navbar.ejs') %>
+    <div class="new-subject-container">
+        <h1>Új tárgy</h1>
+        <form action="/admin/newSubject" method="post">
+            <input type="text" name="subjectname" placeholder="Tárgy neve" required>
+            <input type="text" name = "subjectcode" placeholder="Tárgy kódja" required>
+            <input type="number" name = "credit" placeholder="Kredit" required>
+            <select name="requirement" id="requirement">
+                <option value="Gyakorlati jegy">Gyakorlati jegy</option>
+                <option value="Kollokvium">Kollokvium</option>
+            </select>
+            <select name="type" id="type">
+                <option value="Kötelező">Kötelező</option>
+                <option value="Kötelezően választható">Kötelezően választható</option>
+                <option value="Szabadon választható">Szabadon választható</option>
+            </select>
+            <select name="periodterm" id="periodterm">
+                <% periodTerms.forEach(element => { %>
+                    <% if (element.Id == periodTermId) { %>
+                        <option value="<%= element.Id %>" selected><%= element.TermName %></option>
+                    <% } else { %>
+                        <option value="<%= element.Id %>"><%= element.TermName %></option>
+                    <% } %>
+                <% }) %>
+            </select>
+            <button type="submit">Tárgy hozzáadása</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kurzusok - <%= subjectName %></title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="/js/courses.js"></script>
+</head>
+<body>
+    <%- include('templates/navbar.ejs') %>
+    <div class="container">
+        <h1>Kurzusok</h1>
+        <table>
+            <tr>
+                <th>Kurzuskód</th>
+                <th>Típus</th>
+                <th>Tanár</th>
+                <th>Férőhelyek</th>
+                <th>Hallgatók</th>
+            </tr>
+            <% courses.forEach(element => { %>
+                <tr>
+                    <td><%= element.CourseCode %></td>
+                    <td><%= element.CourseType_DNAME %></td>
+                    <td><%= element.CourseTutor %></td>
+                    <td><%= element.SignedStudents %>/<%= element.StudentLimit %></td>
+                    <td>
+                        <button class="course-button" onclick="newCourse('<%= element.SubjectCode %>')">Hallgatók megtekintése</button>
+                    </td>
+                </tr>
+            <% }) %>
+        </table>
+        <button class="new" onclick="newCourse('<%= subjectId %>')">+</button>
+    </div>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Új vizsga - <%= subjectCode %></title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/newsubject.css">
+</head>
+<body>
+    <%- include('templates/navbar.ejs') %>
+    <div class="new-subject-container">
+        <h1>Új vizsga</h1>
+        <form action="/admin/newExam" method="post">
+            <input type="text" name="subjectcode" value="<%= subjectCode %>" required readonly>
+            <input type="datetime-local" name = "fromdate" placeholder="Kezdés" required>
+            <input type="datetime-local" name = "todate" placeholder="Vége" required>
+            <select name="type" id="type">
+                <option value="Írásbeli">Írásbeli</option>
+                <option value="Szóbeli">Szóbeli</option>
+                <option value="CooSpace-es teszt">CooSpace-es teszt</option>
+            </select>
+            <button type="submit">Vizsga hozzáadása</button>
+        </form>
+    </div>
+</body>
+</html>

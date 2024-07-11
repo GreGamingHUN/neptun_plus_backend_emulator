@@ -1,0 +1,12 @@
+.new-subject-container, form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 50px;
+    gap: 30px;
+}
+
+form *:not(button) {
+    width: 100%;
+}

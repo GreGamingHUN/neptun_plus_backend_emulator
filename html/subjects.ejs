@@ -10,7 +10,7 @@
 </head>
 <body>
     <%- include('templates/navbar.ejs') %>
-    <div class="subjects-container">
+    <div class="container">
         <h1>Tárgyak</h1>
         <select name="periodterm" id="periodterm" onchange="setPeriodTerm(value)">
             <option value=""></option>
@@ -39,15 +39,17 @@
                         <td><%= element.SubjectRequirement %></td>
                         <td><%= element.SubjectSignupType %></td>
                         <td>
-                            <button class="course-button">Kurzusok megtekintése</button>
+                            <button class="course-button" onclick="showCourses('<%= element.SubjectCode %>')">Kurzusok megtekintése</button>
                         </td>
                         <td>
-                            <button class="course-button">Vizsgák megtekintése</button>
+                            <% if (element.SubjectRequirement == "Kollokvium") { %>
+                                <button class="course-button" onclick="showExams('<%= element.SubjectCode %>')">Vizsgák megtekintése</button>
+                            <% } %>
                         </td>
                     </tr>
                 <% }) %>
             </table>
-            <button class="new-subject">+</button>
+            <button class="new" onclick="newSubject('<%= periodTermId %>')">+</button>
         <% } else { %>
             <h3>Válassz időszakot!</h3>
         <% } %>

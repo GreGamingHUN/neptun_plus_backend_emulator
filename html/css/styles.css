@@ -45,6 +45,32 @@ body, body table {
     justify-content: center;
 }
 
+table * {
+    padding: 10px;
+}
+
+table tr:nth-child(odd) {
+    background: rgb(124, 77, 77);
+}
+
+table th {
+    background: rgb(228, 140, 140);
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 35px;
+    text-align: center;
+    align-items: center;
+}
+
+.new {
+    border-radius: 50%;
+    height: 50px;
+    width: 50px;
+}
+
 .roboto-thin {
     font-family: "Roboto", sans-serif;
     font-weight: 100;

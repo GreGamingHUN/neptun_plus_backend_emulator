@@ -6,6 +6,7 @@ const crypto = require("crypto");
 const bodyParser = require('body-parser');
 
 var serviceAccount = require("./admin-key.json");
+const { type } = require("os");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -309,6 +310,109 @@ app.get("/admin/subjects", async (req, res) => {
   return res.render(__dirname + "/html/subjects.ejs", {periodTerms: periodTerms, subjects: subjects, periodTermId: req.query.periodtermid});
 });
 
+app.get("/admin/newsubject", async (req, res) => {
+  let periodTerms = await db.collection("periodterms").get();
+  periodTerms = periodTerms.docs.map(doc => doc.data());
+  
+  return res.render(__dirname + "/html/newsubject.ejs", {periodTerms: periodTerms, periodTermId: req.query.periodtermid});
+});
+
+app.post("/admin/newSubject", async (req, res) => {
+  let subjectCode = req.body.subjectcode;
+  let subjectName = req.body.subjectname;
+  let type = req.body.type;
+  let requirement = req.body.requirement;
+  let credit = req.body.credit;
+  let subjectSearch = await db.collection("subjects").where("SubjectCode", "==", subjectCode).get();
+  if (subjectSearch.empty) {
+    db.collection("subjects").add({
+      SubjectCode: subjectCode,
+      SubjectName: subjectName,
+      SubjectSignupType: type,
+      SubjectRequirement: requirement,
+      Credit: Number(credit),
+      CurriculumTemplateID: 69420,
+      CurriculumTemplatelineID: 123,
+      SubjectId: getRandomNumber(100000, 999999),
+      TermID: Number(req.body.periodterm)
+    }).then(() => {
+      return res.redirect('/admin/subjects');
+    });
+  } else {
+    return res.redirect('/admin/newsubject');
+  }
+});
+
+app.get("/admin/courses", async(req, res) => {
+  let subjectName = (await db.collection("subjects").where("SubjectCode", "==", req.query.subjectid).get()).docs[0].data().SubjectName;
+  let courses = await db.collection("courses").where("SubjectCode", "==", req.query.subjectid).get();
+  courses = courses.docs.map(doc => doc.data());
+  return res.render(__dirname + "/html/courses.ejs", {courses: courses, subjectName: subjectName, subjectId: req.query.subjectid});
+});
+
+app.get("/admin/newcourse", async (req, res) => {
+  let subjectCode = req.query.subjectid;
+  return res.render(__dirname + "/html/newcourse.ejs", {subjectCode: subjectCode});
+});
+
+app.post("/admin/newCourse", async (req, res) => {
+  let courseCode = req.body.coursecode;
+  let subjectCode = req.body.subjectcode;
+  let info = req.body.info;
+  let limit = req.body.limit;
+  let courseType = req.body.type;
+  let courseTutor = req.body.tutor;
+  let courseSearch = await db.collection("courses").where("CourseCode", "==", courseCode).get();
+  if (courseSearch.empty) {
+    db.collection("courses").add({
+      CourseCode: courseCode,
+      SubjectCode: subjectCode,
+      CourseTimeTableInfo: info,
+      StudentLimit: Number(limit),
+      SignedStudents: 0,
+      CourseType_DNAME: courseType,
+      CourseTutor: courseTutor,
+      Id: getRandomNumber(100000, 999999)
+    }).then(() => {
+      return res.redirect('/admin/courses?subjectid=' + req.body.subjectcode);
+    });
+  } else {
+    return res.redirect('/admin/newcourse');
+  }
+});
+
+app.get("/admin/exams", async (req, res) => {
+  let subjectCode = req.query.subjectid;
+  let exams = await db.collection("exams").where("SubjectCode", "==", subjectCode).get();
+  exams = exams.docs.map(doc => doc.data());
+  return res.render(__dirname + "/html/exams.ejs", {exams: exams, subjectCode: subjectCode});
+});
+
+app.get("/admin/newexam", async (req, res) => {
+  let subjectCode = req.query.subjectid;
+  return res.render(__dirname + "/html/newexam.ejs", {subjectCode: subjectCode});
+});
+
+app.post("/admin/newExam", async (req, res) => {
+  let fromDate = new Date(req.body.fromdate).getTime();
+  let toDate = new Date(req.body.todate).getTime();
+  let subjectCode = req.body.subjectcode
+  let type = req.body.type;
+  let subject = await db.collection("subjects").where("SubjectCode", "==", subjectCode).get();
+  let subjectName = subject.docs[0].data().SubjectName;
+  let termID = subject.docs[0].data().TermID;
+
+  db.collection("exams").add({
+    FromDate: `/Date(${fromDate})/`,
+    ToDate: `/Date(${toDate})/`,
+    SubjectCode: subjectCode,
+    ExamType: type,
+    SubjectName: subjectName,
+    TermID: termID
+  }).then(() => {
+    return res.redirect('/admin/exams?subjectid=' + subjectCode);
+  });
+});
 
 app.get("/admin/message", async (req, res) => {
   let students = await db.collection("students").get();
