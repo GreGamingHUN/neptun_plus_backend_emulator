@@ -30,6 +30,7 @@
                     <th>Feltétel</th>
                     <th>Típus</th>
                     <th>Kurzusok</th>
+                    <th>Vizsgák</th>
                 </tr>
                 <% subjects.forEach(element => { %>
                     <tr>
@@ -39,6 +40,9 @@
                         <td><%= element.SubjectSignupType %></td>
                         <td>
                             <button class="course-button">Kurzusok megtekintése</button>
+                        </td>
+                        <td>
+                            <button class="course-button">Vizsgák megtekintése</button>
                         </td>
                     </tr>
                 <% }) %>
