@@ -20,6 +20,7 @@ a {
     border: none;
     transition: all 0.2s;
     height: 100%;
+    padding-inline: 15px;
 }
 
 .navbar-button:hover {
