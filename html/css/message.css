@@ -1,0 +1,22 @@
+.message-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.message-container form {
+    width: 60vw;
+}
+
+.message-container input {
+    width: 100%;
+}
+
+#isglobal {
+    width: min-content;
+    height: min-content;
+}
+
+select {
+    width: min-content;
+}
