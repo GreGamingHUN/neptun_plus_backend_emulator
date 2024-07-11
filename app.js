@@ -306,8 +306,42 @@ app.post("/admin/addStudent", (req, res) => {
   });
 })
 
-app.get("/message", (req, res) => {
-  return res.render(__dirname + "/html/message.ejs");
+app.post("/admin/sendMessage", async (req, res) => {
+  let sendDateMilliseconds = new Date().getTime();
+  let randomNumber;
+  let unique = false;
+
+  //duplicate id check
+  while (!unique) {
+    randomNumber = getRandomNumber(100000, 999999);
+    let snapshot = await db.collection("messages").where("Id", "==", randomNumber).get();
+    if (snapshot.empty) {
+      unique = true
+    }
+  }
+
+  db.collection("messages").add({
+    Subject: req.body.subject,
+    Detail: req.body.details,
+    IsGlobal: req.body.isGlobal ?? true,
+    RecipientNeptunCode: req.body.recipientNeptunCode ?? "",
+    Name: "Rendszerüzenet",
+    IsNew: true,
+    SendDate: `/Date(${sendDateMilliseconds})/`,
+    Id: randomNumber
+  }).then(() => {
+    return res.redirect('/admin');
+  });
+})
+
+function getRandomNumber(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+app.get("/admin/message", async (req, res) => {
+  let students = await db.collection("students").get();
+  let neptunCodes = students.docs.map(doc => doc.data().neptunCode);
+  return res.render(__dirname + "/html/message.ejs", {neptunCodes: neptunCodes});
 });
 
 app.listen(3000, () => {

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Üzenetküldés</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/message.css">
+    <script src="/js/message.js"></script>
+</head>
+
+<body>
+    <%- include('templates/navbar.ejs') %>
+        <div class="message-container">
+            <form action="/admin/sendMessage" method="post">
+                <h1>Üzenetküldés</h1>
+                <input type="text" name="subject" placeholder="Tárgy">
+                <textarea name="details" id="details" cols="30" rows="10" placeholder="Üzenet"></textarea>
+                <div style="display: flex; gap: 15px;">
+                    <input type="checkbox" name="isglobal" id="isglobal" onchange="isGlobal()">
+                    <label for="isglobal">Körüzenet?</label>
+                </div>
+                <div style="display: flex; gap: 15px;">
+                    <label for="neptuncode">Címzett Neptun kódja: </label>
+                    <select name="neptuncode" id="neptuncode">
+                        <% neptunCodes.forEach(element=> { %>
+                            <option value="<%= element %>">
+                                <%= element %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+                <button type="submit" id="send-button">Küldés</button>
+            </form>
+        </div>
+</body>
+
+</html>
