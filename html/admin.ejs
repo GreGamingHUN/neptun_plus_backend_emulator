@@ -1,32 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Irányítópult</title>
-    <link rel="stylesheet" href="./css/admin.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/admin.css">
 </head>
+
 <body>
-    <%- include('templates/navbar.ejs') %> 
-    <div class="hallgatok-container">
-        <h2 style="text-align: center;">Hallgatók listája</h2>
-        <table class="neptun-table">
-            <tr>
-                <th>Neptunkód</th>
-            </tr>
-            <% students.forEach(element => { %>
-             <tr>
-                <td>
-                    <%= element %>
-                </td>
-            </tr>
-            <% }) %>
-        </table>
-        <form action="/admin/addStudent" method="post">
-            <input type="text" name="neptunCode" placeholder="Neptunkód">
-            <input type="text" name="password" placeholder="Jelszó">
-            <button type="submit">Hozzáadás</button>
-        </form>
-    </div>
+    <%- include('templates/navbar.ejs') %>
+        <div class="hallgatok-container">
+            <h2 style="text-align: center;">Hallgatók listája</h2>
+            <table class="neptun-table">
+                <tr>
+                    <th>Neptunkód</th>
+                </tr>
+                <% students.forEach(element=> { %>
+                    <tr>
+                        <td>
+                            <%= element %>
+                        </td>
+                    </tr>
+                    <% }) %>
+            </table>
+            <form action="/admin/addStudent" method="post" class="input-table">
+                <h3>Hallgató hozzáadása</h3>
+                    <input type="text" name="neptunCode" placeholder="Neptunkód">
+                    <input type="password" name="password" placeholder="Jelszó">
+                    <button type="submit">Hozzáadás</button>
+            </form>
+        </div>
 </body>
+
 </html>

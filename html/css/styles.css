@@ -11,6 +11,40 @@ body {
     background: rgb(53, 53, 53);
 }
 
+input, textarea, select {
+    padding: 15px;
+    font-size: 15px;
+    background: none;
+    border: none;
+    outline: rgb(228, 140, 140) solid 2px;
+    border-radius: 25px;
+    color: whitesmoke;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 50px;
+}
+
+button {
+    padding: 15px;
+    border: none;
+    background: rgb(228, 140, 140);
+    color: whitesmoke;
+    font-size: 15px;
+    border-radius: 25px;
+    cursor: pointer;
+    width: min-content;
+}
+
+body, body table {
+    padding-top: 65px;
+    background: rgb(53, 53, 53);
+    color: whitesmoke;
+    display: flex;
+    justify-content: center;
+}
+
 .roboto-thin {
     font-family: "Roboto", sans-serif;
     font-weight: 100;
