@@ -17,3 +17,13 @@ select {
 table * {
     padding: 10px;
 }
+
+table tr:nth-child(odd) {
+    background: rgb(228, 140, 140);
+}
+
+.new-subject {
+    border-radius: 50%;
+    height: 50px;
+    width: 50px;
+}
