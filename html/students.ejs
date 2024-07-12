@@ -8,5 +8,40 @@
 </head>
 <body>
     <%- include('templates/navbar.ejs') %>
+    <div class="container">
+        <div>
+            <h1>Hallgatók </h1>
+            <h3><%= courseCode %></h3>
+            <table>
+                <tr>
+                    <th>Neptunkód</th>
+                    <th>Jegy</th>
+                    <th>Módosítás</th>
+                </tr>
+                <% students.forEach(element => { %>
+                    <tr>
+                        <td><%= element.neptunCode %></td>
+                        <td><%= element.result %></td>
+                        <td>
+                            <form action="/admin/setGrade" method="post">
+                                <input type="text" name="subjectcode" value="<%= courseCode.split('-')[0] %>" hidden>
+                                <input type="text" name="coursecode" value="<%= courseCode%>" hidden>
+                                <input type="text" name="neptuncode" value="<%= element.neptunCode %>" hidden>
+                                <select name="grade" id="grade">
+                                    <option value=""></option>
+                                    <option value="Jeles (5)">Jeles (5)</option>
+                                    <option value="Jó (4)">Jó (4)</option>
+                                    <option value="Közepes (3)">Közepes (3)</option>
+                                    <option value="Elégséges (2)">Elégséges (2)</option>
+                                    <option value="Elégtelen (1)">Elégtelen (1)</option>
+                                </select>
+                                <button type="submit">Mentés</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }) %>
+            </table>
+        </div>
+    </div>
 </body>
 </html>

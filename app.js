@@ -142,16 +142,105 @@ app.post("/api/GetSubjects", async (req, res) => {
   if (req.body.TermId == undefined) {
     return res.status(400).send("TermId is required");
   }
-  db.collection("subjects")
-    .where("TermID", "==", parseInt(req.body.TermId))
-    .get()
-    .then((snapshot) => {
-      let content = [];
-      snapshot.forEach((doc) => {
-        content.push(doc.data());
+  let subjectName = req.body.filter.SubjectName;
+  if (subjectName == undefined || subjectName == "") {
+    db.collection("subjects")
+      .where("TermID", "==", parseInt(req.body.TermId))
+      .get()
+      .then((snapshot) => {
+        let content = [];
+        snapshot.forEach((doc) => {
+          content.push(doc.data());
+        });
+        res.send({ SubjectList: content });
       });
-      res.send({ SubjectList: content });
+  } else {
+      db.collection("subjects")
+      .where("TermID", "==", parseInt(req.body.TermId))
+      .orderBy("SubjectName")
+      .get()
+      .then((snapshot) => {
+        let content = [];
+        snapshot.forEach((doc) => {
+          content.push(doc.data());
+        });
+        let filteredContent = content.filter(item => item.SubjectName.toLowerCase().includes(subjectName.toLowerCase()));
+        res.send({ SubjectList: filteredContent });
+      });
+  }
+});
+
+app.post("/api/GetCourses", async (req, res) => {
+  let sujbectId = req.body.filter.Id;
+  let subjectCode = await db.collection("subjects").where("SubjectId", "==", sujbectId).get();
+  subjectCode = subjectCode.docs[0].data().SubjectCode;
+
+  let courses = await db.collection("courses").where("SubjectCode", "==", subjectCode).get();
+  courses = courses.docs.map(doc => doc.data())
+
+  return res.send({ CourseList: courses });
+});
+
+app.post("/api/SaveSubject", async (req, res) => {
+  let subjectId = req.body.SubjectId;
+  let courseCode = req.body.CourseCode;
+  let neptunCode = req.body.UserLogin.toUpperCase();
+  let subject = (await db.collection("subjects").where("SubjectId", "==", subjectId).get()).docs[0].data();
+  let subjectCode = subject.SubjectCode;
+  let addedSubjectCheck = await db.collection("addedsubjects").where("SubjectCode", "==", subjectCode).where("neptunCode", "==", neptunCode).get();
+  if (addedSubjectCheck.empty) {
+    await db.collection("addedsubjects").add({
+      "SubjectCode": subjectCode,
+      "neptunCode": neptunCode,
+      "SubjectComplianceResult": "",
+      "TermId": subject.TermID,
+      "SubjectCredit": subject.Credit.toString(),
+      "SubjectName": subject.SubjectName,
+      "SubjectID": subjectId,
+      "SubjectRequirement": subject.SubjectRequirement,
+      "Subjecttype": subject.SubjectSignupType,
     });
+    await db.collection("addedcourses").add({
+      "CourseCode": courseCode,
+      "NeptunCode": neptunCode,
+      "SubjectCode": subjectCode
+    });
+    let course = await db.collection("courses").where("CourseCode", "==", courseCode).get();
+    course = course.docs[0].id;
+    await db.collection("courses").doc(course).update({
+      SignedStudents: admin.firestore.FieldValue.increment(1)
+    });
+    return res.send({});
+  }
+  return res.send({ "ErrorMessage": "Már felvetted ezt a tárgyat" });
+
+});
+
+app.post("/api/DeleteSubject", async (req, res) => {
+  let subjectCode = req.body.SubjectCode;
+  let neptunCode = req.body.UserLogin.toUpperCase();
+  let subject = await db.collection("addedsubjects").where("SubjectCode", "==", subjectCode).where("neptunCode", "==", neptunCode).get();
+  subject = subject.docs[0];
+  if (subject.empty) {
+    return res.send({ "ErrorMessage": "Nem vetted fel ezt a tárgyat" });
+  }
+  if (subject.SubjectComplianceResult == "" || subject.SubjectComplianceResult == undefined) {
+    await db.collection("addedsubjects").doc(subject.id).delete();
+    let course = await db.collection("addedcourses").where("SubjectCode", "==", subjectCode).where("NeptunCode", "==", neptunCode).get();
+    course = course.docs[0];
+    await db.collection("addedcourses").doc(course.id).delete();
+    
+    
+    let courseData = await db.collection("courses").where("CourseCode", "==", course.data().CourseCode).get();
+    courseData = courseData.docs[0];
+    await db.collection("courses").doc(courseData.id).update({
+      SignedStudents: admin.firestore.FieldValue.increment(-1)
+    });
+    
+    return res.send({});
+  }
+  return res.send({ "ErrorMessage": "Nem adhatod le ezt a tárgyat, mert már értékelték" });
+
 });
 
 app.post("/api/Get*", async (req, res) => {
@@ -412,6 +501,38 @@ app.post("/admin/newExam", async (req, res) => {
   }).then(() => {
     return res.redirect('/admin/exams?subjectid=' + subjectCode);
   });
+});
+
+app.get("/admin/students", async (req, res) => {
+  let courseCode = req.query.coursecode;
+  let students = await db.collection("addedcourses").where("CourseCode", "==", courseCode).get();
+  students = students.docs.map(doc => doc.data());
+  for (let index = 0; index < students.length; index++) {
+    let result = await db.collection("addedsubjects").where("neptunCode", "==", students[index].NeptunCode).get();
+    result = result.docs.map(doc => doc.data())[0];
+    students[index] = {
+      subjectCode: students[index].SubjectCode,
+      neptunCode: students[index].NeptunCode,
+      result: result.SubjectComplianceResult,
+    };
+  }
+
+  return res.render(__dirname + "/html/students.ejs", {students: students, courseCode: courseCode});
+});
+
+app.post("/admin/setGrade", async (req, res) => {
+  let subjectCode = req.body.subjectcode;
+  let neptunCode = req.body.neptuncode;
+  let grade = req.body.grade;
+  let courseCode = req.body.coursecode
+  await db.collection("addedsubjects").where("neptunCode", "==", neptunCode).where("SubjectCode", "==", subjectCode).get().then((snapshot) => {
+    snapshot.forEach((doc) => {
+      db.collection("addedsubjects").doc(doc.id).update({
+        SubjectComplianceResult: grade
+      });
+    });
+  });
+  return res.redirect('/admin/students?coursecode=' + courseCode);
 });
 
 app.get("/admin/message", async (req, res) => {

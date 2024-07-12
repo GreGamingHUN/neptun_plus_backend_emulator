@@ -26,7 +26,7 @@
                     <td><%= element.CourseTutor %></td>
                     <td><%= element.SignedStudents %>/<%= element.StudentLimit %></td>
                     <td>
-                        <button class="course-button" onclick="newCourse('<%= element.SubjectCode %>')">Hallgatók megtekintése</button>
+                        <button class="course-button" onclick="students('<%= element.CourseCode %>')">Hallgatók megtekintése</button>
                     </td>
                 </tr>
             <% }) %>
