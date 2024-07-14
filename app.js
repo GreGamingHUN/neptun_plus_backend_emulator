@@ -105,12 +105,17 @@ app.post("/api/SetExamSigning", async (req, res) => {
   let examID = req.body.ExamId;
   let neptunCode = req.body.UserLogin.toUpperCase();
   //let term = (await db.collection("periodterms").where("active", "==", true).get())[0];
-
+  let login = await loginCheck(req.body.UserLogin, req.body.Password);
+  if (login == false) {
+    return res.status(401).send({
+      "ErrorMessage": "Hibás Neptunkód vagy jelszó",
+    });
+  }
   if (req.body.SigningOn == false) {
     let examQuery = await db.collection("addedexams").where("ExamID", "==", examID).where("NeptunCode", "==", neptunCode).get();
     let exam = examQuery.docs[0];
     if (exam != undefined) {
-      if (exam.status == "pending") {
+      if (exam.data().status == "pending") {
         await db.collection("addedexams").doc(exam.id).delete();
         res.send({});
         return;
@@ -213,10 +218,15 @@ app.post("/api/SaveSubject", async (req, res) => {
     return res.send({});
   }
   return res.send({ "ErrorMessage": "Már felvetted ezt a tárgyat" });
-
 });
 
 app.post("/api/DeleteSubject", async (req, res) => {
+  let login = await loginCheck(req.body.UserLogin, req.body.Password);
+  if (login == false) {
+    return res.status(401).send({
+      "ErrorMessage": "Hibás Neptunkód vagy jelszó",
+    });
+  }
   let subjectCode = req.body.SubjectCode;
   let neptunCode = req.body.UserLogin.toUpperCase();
   let subject = await db.collection("addedsubjects").where("SubjectCode", "==", subjectCode).where("neptunCode", "==", neptunCode).get();
@@ -240,10 +250,15 @@ app.post("/api/DeleteSubject", async (req, res) => {
     return res.send({});
   }
   return res.send({ "ErrorMessage": "Nem adhatod le ezt a tárgyat, mert már értékelték" });
-
 });
 
 app.post("/api/Get*", async (req, res) => {
+  let login = await loginCheck(req.body.UserLogin, req.body.Password);
+  if (login == false) {
+    return res.status(401).send({
+      "ErrorMessage": "Hibás Neptunkód vagy jelszó",
+    });
+  }
   let response = {};
   let collectionName = req.path.slice(8).toLowerCase();
   switch (collectionName) {
@@ -260,7 +275,6 @@ app.post("/api/Get*", async (req, res) => {
       snapshot.forEach((doc) => {
         content.push(doc.data());
       });
-
       switch (collectionName) {
         case "messages":
           content = await filterMessages(content, req.body.UserLogin.toUpperCase());
@@ -280,14 +294,18 @@ app.post("/api/Get*", async (req, res) => {
         default:
           break;
       }
-
       res.send(response);
     });
 });
 
 async function getExams(added, termId, neptunCode) {
   if (added == 0) {
-    let data = await db.collection("exams").where("TermID", "==", Number(termId)).get()
+    let addedsubjects = await db.collection("addedsubjects").where("neptunCode", "==", neptunCode).get();
+    let subjectCodes = [];
+    addedsubjects.forEach(doc => {
+      subjectCodes.push(doc.data().SubjectCode);
+    });
+    let data = await db.collection("exams").where("TermID", "==", Number(termId)).where("SubjectCode", "in", subjectCodes).get();
     let content = [];
     data.forEach(doc => {
       let exam = doc.data();
@@ -580,4 +598,14 @@ app.listen(3000, () => {
 
 function getHash(input) {
   return crypto.createHash("sha256").update(input).digest("hex");
+}
+
+async function loginCheck(neptunCode, password) {
+  let hash = getHash(password);
+  let check = await db.collection("students")
+    .where("neptunCode", "==", neptunCode)
+    .where("password", "==", hash)
+    .get();
+  
+  return !check.empty;
 }
